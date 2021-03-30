@@ -3,7 +3,7 @@
 
 import socket, sys, asyncio
 
-HOST = '192.168.100.82'
+HOST = '192.168.1.14'
 PORT = 502
 
 class client:
@@ -46,7 +46,7 @@ class server:
 				newClient = client(self.clients[-1].id + 1,username,addr, con)
 
 			# client connected, creating a thread
-			print (f"new conncetion {addr[0]}:{addr[1]}")
+			print (f"{newClient.username}#{newClient.id} connected with ip {addr[0]}:{addr[1]}")
 			con.send(bytes(f"{newClient.id}", "utf8"))
 			con.send(bytes(f"Bienvenue sur {self.name}. Vous Pouvez a present envoyer des messages !", "utf8"))
 			self.clients.append(newClient)
@@ -59,13 +59,14 @@ class server:
 		# listening for event
 		while running:
 			try:
-				ide, msg = client.connection.recv(1024).decode("utf8").split("\6")
-				print(msg)
+				msg = client.connection.recv(1024).decode("utf8")
 			# client closed the chat
 			except ConnectionResetError:
 				msg = f"{client.username} left the chat..."
 				self.clients.remove(client)
 				running = False
+			except ValueError:
+				msg = ""
 
 			# client sent the exit() command
 			if msg == "exit()":
@@ -73,10 +74,15 @@ class server:
 				client.connection.send("Au revoir !")
 				client.connection.close()
 				running = False
-				
-			for user in self.clients:
-				print(f"sent '{msg} to {user.username}")
-				user.connection.send(bytes(f"{msg}", "utf8"))
+
+			# an empty message means that the client sent junk 
+			if msg != "":
+				print(f"{client.username}> {msg} ")
+				for user in self.clients:
+					user.connection.send(bytes(f"{client.username}> {msg}", "utf8"))
 
 if __name__ == "__main__":
-	serv = server("LES COCHONOUX DU 31", HOST)
+	try:
+		serv = server("LES COCHONOUX DU 31", HOST)
+	except KeyboardInterrupt:
+		print("server stoped !")
