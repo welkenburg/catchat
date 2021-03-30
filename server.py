@@ -1,36 +1,63 @@
-import socket, sys
+import socket, sys, asyncio
 
 HOST = '192.168.100.82'
 PORT = 502
 
-mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+class client:
+	def __init__(self, ide, username, addr, connection):
+		self.id = ide
+		self.username = username
+		self.ip = addr
+		self.connection = connection
 
-try:
-	mySocket.bind((HOST, PORT))
-except socket.error:
-	print("La liaison du socket à l'adresse choisie a échoué.")
-	sys.exit()
+class server:
+	def __init__(self, name, ip, port=502, clientMax=10):
+		self.name = name
+		self.ip = ip
+		self.port = port
+		self.clientMax = clientMax
+		self.clients = []
+		self.start()
 
-while 1:
-	print("Serveur prêt, en attente de requêtes ...")
-	mySocket.listen(1)
+	def start(self):
+		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		try:
+			self.socket.bind((self.ip, self.port))
+		except:
+			raise "Le serveur n'a pas pu etre créé"
+		while 1:
+			print("### Server Started ###")
+			self.socket.listen(self.clientMax)
 
-	con, addr = mySocket.accept()
-	print (f"[CONNECTED] {addr[0]}:{addr[1]}")
-	con.send(bytes("Vous etes connecté au serveur Marcel. Envoyez vos messages.", "utf8"))
-	msgClient = con.recv(1024).decode("utf8")
-	while 1:
-		print ("C>", msgClient)
-		if msgClient.upper() == "END":
-			break
-		msgServeur = input("S> ")
-		con.send(bytes(msgServeur, "utf8"))
-		msgClient = con.recv(1024).decode("utf8")
+			con, addr = self.socket.accept()
+			_, username = con.recv(1024).decode("utf8").split("\6")
+			newClient = client(0,username,addr, con)
+			if len(self.clients) > 0:
+				newClient = client(self.clients[-1].id + 1,username,addr, con)
 
-	con.send("Au revoir !")
-	print ("con interrompue.")
-	con.close()
+			# nom= "paul"
+			# f"bonjour {nom}"
+			print (f"new conncetion {addr[0]}:{addr[1]}")
+			con.send(bytes(f"{newClient.id}", "utf8"))
+			con.send(bytes(f"Bienvenue sur {self.name}. Vous Pouvez a present envoyer des messages !", "utf8"))
+			self.clients.append(newClient)
+			asyncio.run(self.handleConnection(newClient))
+			
 
-	ch = input("<R>ecommencer <T>erminer ? ")
-	if ch.upper() =='T':
-		break
+	async def handleConnection(self, client):
+		running = True
+		while running:
+			try:
+				ide, msg = client.connection.recv(1024).decode("utf8").split("\6")
+				print(msg)
+			except ConnectionResetError:
+				return False
+			if msg == "END":
+				con.send("Au revoir !")
+				con.close()
+				running = False
+				msg = f"{client.username} left the chat..."
+			for user in self.clients:
+				user.connection.send(bytes(f"yo", "utf8"))
+
+serv = server("LES COCHONOUX DU 31", HOST)
