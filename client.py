@@ -1,14 +1,6 @@
 import socket, sys, asyncio
-
-class UI:
-    status = {
-        "s": "STATUS",
-        "m": "MESSAGE",
-        "e": "ERROR"
-    }
-
-    def show(self, type, msg):
-        print(f"[{self.status[type]}] {msg}")
+from utils import UI
+from config import CONFIG
 
 class Client:
     
@@ -60,6 +52,4 @@ class Client:
                 break
             self.send(m)
 
-HOST = "192.168.100.82"
-PORT = 502
-c = Client("flo", HOST, PORT)
+c = Client("flo", CONFIG["HOST"], CONFIG["PORT"])

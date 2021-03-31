@@ -1,10 +1,5 @@
-#py 3.9
-#author : welkenburg
-
 import socket, sys, asyncio
-
-HOST = '192.168.1.14'
-PORT = 502
+from config import CONFIG
 
 class client:
 	def __init__(self, ide, username, addr, connection):
@@ -14,7 +9,7 @@ class client:
 		self.connection = connection 	# connecion socket object to send and receive from the client
 
 class server:
-	def __init__(self, name, ip, port=502, clientMax=10):
+	def __init__(self, name, ip, port, clientMax=10):
 		self.name = name				# str, server's name
 		self.ip = ip					# str, server's ip adress
 		self.port = port				# int, port you want to listen to
@@ -83,6 +78,6 @@ class server:
 
 if __name__ == "__main__":
 	try:
-		serv = server("LES COCHONOUX DU 31", HOST)
+		serv = server("LES COCHONOUX DU 31", CONFIG["HOST"], CONFIG["PORT"])
 	except KeyboardInterrupt:
 		print("server stoped !")
