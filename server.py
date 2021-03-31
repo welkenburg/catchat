@@ -1,7 +1,7 @@
 #py 3.9
 #author : welkenburg
 
-import socket, sys, asyncio
+import socket, sys, threading
 
 HOST = '192.168.1.14'
 PORT = 502
@@ -32,15 +32,14 @@ class server:
 			raise "Le serveur n'a pas pu etre créé"
 
 		# server created
+		print("### Server Started ###")
 		while 1:
-			print("### Server Started ###")
-
 			# listen for clients
 			self.socket.listen(self.clientMax)
 
 			# a client is trying to connect !
 			con, addr = self.socket.accept()
-			_, username = con.recv(1024).decode("utf8").split("\6")
+			username = con.recv(1024).decode("utf8")
 			newClient = client(0,username,addr, con)
 			if len(self.clients) > 0:
 				newClient = client(self.clients[-1].id + 1,username,addr, con)
@@ -50,11 +49,11 @@ class server:
 			con.send(bytes(f"{newClient.id}", "utf8"))
 			con.send(bytes(f"Bienvenue sur {self.name}. Vous Pouvez a present envoyer des messages !", "utf8"))
 			self.clients.append(newClient)
-			asyncio.run(self.handleConnection(newClient))
+			threading.Thread(target=self.handleConnection, args=(newClient,)).start()
 			
 
 	# case to case client handling 
-	async def handleConnection(self, client):
+	def handleConnection(self, client):
 		running = True
 		# listening for event
 		while running:

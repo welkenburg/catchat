@@ -1,4 +1,12 @@
 # catchat
 a chat using the socket lib in python
 
-I don't know what to put there so it will only be crap
+```bash
+# Fetch github changes
+$ git pull
+
+# Make changes
+$ git stage .
+$ git commit -m "commit message"
+$ git push
+```

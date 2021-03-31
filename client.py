@@ -1,4 +1,6 @@
-import socket, sys, asyncio
+import socket, sys, threading
+from utils import UI
+from config import CONFIG
 
 class UI:
     status = {
@@ -16,12 +18,12 @@ class Client:
         self.username = username
         self.HOST = host
         self.PORT = port
+        print(f"{self.HOST}:{self.PORT}")
         self.ENCODING = "utf8"
         self.ui = UI()
-        self.id = None
         self.__connect()
-        asyncio.run(self.listenSend())
-        self.__listen()
+        threading.Thread(target=self.listenSend).start()
+        threading.Thread(target=self.__listen).start()
     
     def __connect(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -32,20 +34,19 @@ class Client:
             self.ui.show("e", "Connection failed")
             sys.exit()
         self.send(self.username)
-        self.id = self.__receive()
         self.ui.show("m", self.__receive())
 
     def __receive(self):
         return self.socket.recv(1024).decode(self.ENCODING)
 
     def send(self, msg):
-        self.socket.send(bytes(f"{self.id}\6{msg}", self.ENCODING))
+        self.socket.send(bytes(f"{msg}", self.ENCODING))
     
     def close(self):
         self.socket.close()
         self.ui.show("s", "Connection closed")
     
-    async def __listen(self):
+    def __listen(self):
         while True:
             if self.__receive() == "END":
                 break
@@ -53,13 +54,11 @@ class Client:
                 self.ui.show("m", self.__receive())
         self.close()
     
-    async def listenSend(self):
+    def listenSend(self):
         while True:
             m = input("msg: ")
             if m == "END":
                 break
             self.send(m)
 
-HOST = "192.168.100.82"
-PORT = 502
-c = Client("flo", HOST, PORT)
+c = Client("welk", CONFIG["HOST"], CONFIG["PORT"])
